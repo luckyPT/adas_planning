@@ -1,6 +1,8 @@
 #include <iostream>
 #include "src/osqp_test.hpp"
 #include "src/easy_x_test.hpp"
+#include <vector>
+#include <string.h>
 int main(int argc, char const *argv[])
 {
     std::cout << "start running" << std::endl;
