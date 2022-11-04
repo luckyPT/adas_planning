@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include "trajectory_point.hpp"
 #include "../../libs/easy_x/graphics.h"

@@ -2,6 +2,7 @@
 #include "../../libs/easy_x/graphics.h"
 #include "point.hpp"
 #include "trajectory.hpp"
+# include "../em_planner/path_dp_plan.hpp"
 #include <time.h>
 #define CAR_MAX_SPEED 100
 class Car{
@@ -14,7 +15,9 @@ class Car{
         float pos_x;
         float pos_y;
         float front_wheel_angle;
+        Lane ref_lane;
         Trajectory trajectory;
+        DpPlan dp_planner;
     Car(){
         this->width = 20;
         this->length = 48;
@@ -37,6 +40,7 @@ class Car{
         setlinestyle(PS_SOLID, 1);
         fillrectangle(pos_x - 0.5 * width, pos_y + 0.5 * length, 
                         pos_x + 0.5 * width, pos_y - 0.5 * length);
+        draw_plan_trajectory();
     }
 
     void update_status(float duration){
@@ -66,5 +70,17 @@ class Car{
                 trajectory.points.emplace_back(std::move(point));
             }
         }
+    }
+
+    void draw_plan_trajectory(){
+        TrajectoryPoint ego_traj_start_point;
+        ego_traj_start_point.x = pos_x;
+        ego_traj_start_point.y = pos_y;
+        ego_traj_start_point.speed = v;
+
+        InputData input_data;
+        input_data.start_point = ego_traj_start_point;
+        input_data.ref_lane = ref_lane;
+        dp_planner.plan(input_data, trajectory);
     }
 };

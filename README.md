@@ -16,3 +16,7 @@
     - trajectory
     - scene
 2. 完善可视化，支持车辆匀加速运动，直线轨迹可视化
+
+### Day3 path plan:Dp - sample and fit curve
+1. 实现采样逻辑（基础版）
+2. 基于五次多项式拟合曲线、计算多阶导数；

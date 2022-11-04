@@ -13,7 +13,7 @@ class Scene{
     void update_and_draw() {
         for(Car& car : cars){
             car.update_status(1.0 /  update_freq);
-            car.generate_ca_trajectory();
+            // car.generate_ca_trajectory();
         }
         draw();
     };

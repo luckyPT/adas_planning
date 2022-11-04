@@ -78,6 +78,9 @@ class Lane{
         setlinestyle(PS_SOLID, width[0]);
         setlinecolor(DARKGRAY);
         polyline(pts, points.size());
+        setlinestyle(PS_DASH, 1);
+        setlinecolor(GREEN);
+        polyline(pts, points.size());
         delete[] pts;
     }
 };
