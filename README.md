@@ -20,3 +20,7 @@
 ### Day3 path plan:Dp - sample and fit curve
 1. 实现采样逻辑（基础版）
 2. 基于五次多项式拟合曲线、计算多阶导数；
+
+### Day4 path plan:Dp - add Path cost，finish best path select frame
+1. 计算路径平滑度的损失
+2. 完成动态规划选择最优路径的逻辑
