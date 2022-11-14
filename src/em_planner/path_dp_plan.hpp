@@ -77,8 +77,16 @@ class DpPlan{
             POINT* pts = new POINT[9];
             *(pts + 0) = {static_cast<int>(input_data.start_point.x), 
                           static_cast<int>(input_data.start_point.y)};
+            TrajectoryPoint  tmp = TrajectoryPoint();
+            tmp.x = input_data.start_point.x;
+            tmp.y = input_data.start_point.y;
+            trajectory.points.emplace_back(tmp);
             for(int i = 1; i < 9; i++){
                 *(pts + i) = {static_cast<long>(sample_points[i][indexes[i-1]].x), static_cast<long>(sample_points[i][indexes[i-1]].y)};
+                TrajectoryPoint  tmp = TrajectoryPoint();
+                tmp.x = sample_points[i][indexes[i-1]].x;
+                tmp.y = sample_points[i][indexes[i-1]].y;
+                trajectory.points.emplace_back(std::move(tmp));
             }
             setlinestyle(PS_DASH, 10);
             setlinecolor(BLUE);
@@ -88,7 +96,7 @@ class DpPlan{
 
         double calculate_path_cost(QuinticPolynomialCurve1d& curve, double start_s, double end_s){
             double path_cost = 0.0;
-            double l_cost = 1;
+            double l_cost = 10;
             double dl_cost = 1;
             double ddl_cost = 1;
             int interpolation_step = 50;

@@ -24,3 +24,7 @@
 ### Day4 path plan:Dp - add Path cost，finish best path select frame
 1. 计算路径平滑度的损失
 2. 完成动态规划选择最优路径的逻辑
+
+### Day5 path plan:Qp - add Qp optimize path (to do:adjust params)
+1. 新增二次规划优化DP给出的“粗糙”路径
+2. 三次样条曲线工具类（jerk恒定），生成连续路径

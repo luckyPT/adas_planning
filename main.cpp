@@ -8,7 +8,7 @@ int main(int argc, char const *argv[])
 {
     std::cout << "start running" << std::endl;
     std::cout << "run example osqp..." << std::endl;
-    test_osqp();
+    // test_osqp();
     std::cout << "run example easy_x..." << std::endl;
     // test_easy_x();
     change_lane_visual();

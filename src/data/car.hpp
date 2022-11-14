@@ -1,8 +1,9 @@
 #pragma once
 #include "../../libs/easy_x/graphics.h"
+#include "../em_planner/path_dp_plan.hpp"
+#include "../em_planner/path_qp_plan.hpp"
 #include "point.hpp"
 #include "trajectory.hpp"
-# include "../em_planner/path_dp_plan.hpp"
 #include <time.h>
 #define CAR_MAX_SPEED 100
 class Car{
@@ -18,6 +19,7 @@ class Car{
         Lane ref_lane;
         Trajectory trajectory;
         DpPlan dp_planner;
+        QpPlan qp_planner;
     Car(){
         this->width = 20;
         this->length = 48;
@@ -82,5 +84,11 @@ class Car{
         input_data.start_point = ego_traj_start_point;
         input_data.ref_lane = ref_lane;
         dp_planner.plan(input_data, trajectory);
+        std::vector<Point> points;
+        for(int i = 0; i < trajectory.points.size(); i++){
+            points.emplace_back(Point(trajectory.points[i].x, trajectory.points[i].y));
+        }
+        qp_planner.optimize(points, pos_x + 350);
+        trajectory.points.clear();
     }
 };
