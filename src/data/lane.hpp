@@ -75,9 +75,9 @@ class Lane{
         for(int i = 0; i < points.size(); i++){
             *(pts + i) = {static_cast<long>(points[i].x), static_cast<long>(points[i].y)};
         }
-        setlinestyle(PS_SOLID, width[0]);
-        setlinecolor(DARKGRAY);
-        polyline(pts, points.size());
+        // setlinestyle(PS_SOLID, width[0]);
+        // setlinecolor(DARKGRAY);
+        // polyline(pts, points.size());
         setlinestyle(PS_DASH, 1);
         setlinecolor(GREEN);
         polyline(pts, points.size());

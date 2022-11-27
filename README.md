@@ -31,3 +31,9 @@
 
 ### Day6 SimpleRefLine utils
 1. 完成简易的xy ←→ sl坐标转换的工具类
+
+### Day7 Refine Qp Params，add car change lane visual
+1. 完善SimpleRefLine工具类
+2. 基于SL坐标进行Qp优化，并简单调参
+3. 自车变道可视化
+to do：可视化缩放有bug，缩的太小会卡死

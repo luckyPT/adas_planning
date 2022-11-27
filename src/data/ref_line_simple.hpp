@@ -8,7 +8,16 @@ class RefLineSimple{
     public:
         std::vector<Point> points;
         std::vector<float> points_s;
-    
+    void add_point(Point p){
+        if(points.size() == 0){
+            points.emplace_back(p);
+            points_s.emplace_back(0);
+        }else{
+            float cur_distance = std::hypot(p.x - points.back().x, p.y - points.back().y);
+            points.emplace_back(p);
+            points_s.emplace_back(points_s.back() + cur_distance);
+        }
+    }
     bool XY2SL(float x, float y, float& s, float& l){
         float min_dis = 1e8;
         int min_index = 0;
@@ -91,11 +100,7 @@ class RefLineSimple{
         ref_line.points_s.emplace_back(0);
         for(float i = 0.1; i < 2 * M_PI; i += 0.1){
             Point tmp = Point(i, std::sin(i));
-            float cur_s = ref_line.points_s.back();
-            Point last_point = ref_line.points.back();
-
-            ref_line.points_s.emplace_back(cur_s + std::hypot(tmp.x - last_point.x, tmp.y - last_point.y));
-            ref_line.points.emplace_back(tmp);
+            ref_line.add_point(tmp);
         }
 
         for(float x = 0.5; x < 6; x += 0.1){

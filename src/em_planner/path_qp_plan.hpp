@@ -3,18 +3,19 @@
 #include "../../libs/osqp/osqp.h"
 #include "../data/point.hpp"
 #include "../math/piecewise_jerk_trajectory1d.hpp"
+#include "../data/ref_line_simple.hpp"
 class QpPlan{
     public:
-    double w_x = 0;
-    double w_x_ref = 0;
+    double w_x = 10;
+    double w_x_ref = 1;
     double w_dx = 10000;
-    double w_ddx = 100000;
-    double w_dddx = 1000000;
-    double w_end_x = 35;
-    double w_end_dx = 100;
-    double w_end_ddx = 100;
-    double dddx_bound_lower = -5;
-    double dddx_bound_upper = 5;
+    double w_ddx = 1;
+    double w_dddx = 1;
+    double w_end_x = 1;
+    double w_end_dx = 10;
+    double w_end_ddx = 10;
+    double dddx_bound_lower = -1000;
+    double dddx_bound_upper = 1000;
     double delta_s = 500; 
 
     template <typename T>
@@ -25,7 +26,7 @@ class QpPlan{
     }
 
     void calculate_cost_kernel(std::vector<Point>& sample_points,
-                                double standard_x,
+                                RefLineSimple ref_line,
                                 std::vector<c_float>* P_data,
                                 std::vector<c_int>* P_indptr,
                                 std::vector<c_int>* P_indices){
@@ -39,7 +40,7 @@ class QpPlan{
             ++value_index;
         }
         // 末态单独处理  x(n-1)^2 * (w_x + w_x_ref[n-1] + w_end_x)
-        columns[n - 1].emplace_back(n - 1, (w_x + w_x_ref + w_end_x));
+        columns[n - 1].emplace_back(n - 1, (w_x + w_end_x));
         ++value_index;
 
         // x(i)' ^2 * w_dx
@@ -65,7 +66,7 @@ class QpPlan{
             ++value_index;
         }
         columns[3 * n - 1].emplace_back(
-            3 * n - 1, (w_ddx + w_dddx / delta_s_square + w_x_ref));
+            3 * n - 1, (w_ddx + w_dddx / delta_s_square + w_end_ddx));
         ++value_index;
 
         // -2 * w_dddx / delta_s^2 * x(i)'' * x(i + 1)''
@@ -95,7 +96,7 @@ class QpPlan{
     }
 
     void calculate_cost_offset(std::vector<Point>& sample_points, 
-                                double standard_x,
+                                RefLineSimple ref_line,
                                 std::vector<c_float>* q){
         const int n = static_cast<int>(sample_points.size());
         const int kNumParam = 3 * n;
@@ -119,7 +120,7 @@ class QpPlan{
     }
 
     void calculate_constraint(std::vector<Point>& sample_points,
-                                double standard_x,
+                                RefLineSimple ref_line,
                                 std::vector<c_float>* A_data, std::vector<c_int>* A_indices,
                                 std::vector<c_int>* A_indptr, std::vector<c_float>* lower_bounds,
                                 std::vector<c_float>* upper_bounds){
@@ -138,16 +139,16 @@ class QpPlan{
         for (int i = 0; i < num_of_variables; ++i) {
             if (i < n) {
                 variables[i].emplace_back(constraint_index, 1.0);
-                lower_bounds->at(constraint_index) = sample_points[i].x - 50;
-                upper_bounds->at(constraint_index) = sample_points[i].x + 50;
+                lower_bounds->at(constraint_index) = sample_points[i].x - 500;
+                upper_bounds->at(constraint_index) = 0; //sample_points[i].x + 500;
             } else if (i < 2 * n) {
                 variables[i].emplace_back(constraint_index, 1.0);
-                lower_bounds->at(constraint_index) = -10;
-                upper_bounds->at(constraint_index) = 10;
+                lower_bounds->at(constraint_index) = -500;
+                upper_bounds->at(constraint_index) = 0.5;
             } else {
                 variables[i].emplace_back(constraint_index, 1.0);
-                lower_bounds->at(constraint_index) = -10;
-                upper_bounds->at(constraint_index) = 10;
+                lower_bounds->at(constraint_index) = -500;
+                upper_bounds->at(constraint_index) = 500;
             }
             ++constraint_index;
         }
@@ -223,15 +224,15 @@ class QpPlan{
         A_indptr->push_back(ind_p);
     }
 
-    bool optimize(std::vector<Point>& sample_points, double standard_x){
+    bool optimize(std::vector<Point>& sample_points, RefLineSimple ref_line, Trajectory& trajectory){
         std::vector<c_float> P_data;
         std::vector<c_int> P_indices;
         std::vector<c_int> P_indptr;
-        calculate_cost_kernel(sample_points, standard_x, &P_data, &P_indices, &P_indptr);
+        calculate_cost_kernel(sample_points, ref_line, &P_data, &P_indices, &P_indptr);
         
         // calculate offset
         std::vector<c_float> q;
-        calculate_cost_offset(sample_points, standard_x, &q);
+        calculate_cost_offset(sample_points, ref_line, &q);
 
         // calculate affine constraints
         std::vector<c_float> A_data;
@@ -239,7 +240,7 @@ class QpPlan{
         std::vector<c_int> A_indptr;
         std::vector<c_float> lower_bounds;
         std::vector<c_float> upper_bounds;
-        calculate_constraint(sample_points, standard_x, &A_data, &A_indices, &A_indptr, &lower_bounds,
+        calculate_constraint(sample_points, ref_line, &A_data, &A_indices, &A_indptr, &lower_bounds,
                             &upper_bounds);
 
         size_t kernel_dim = 3 * sample_points.size();
@@ -294,14 +295,16 @@ class QpPlan{
         osqp_cleanup(work);
         FreeData(data);
         c_free(settings);
-        ToPiecewiseJerkPath(sample_points[0], x_, dx_, ddx_);
+        ToPiecewiseJerkPath(sample_points[0], x_, dx_, ddx_, ref_line, trajectory);
         return true;
     }
 
     void ToPiecewiseJerkPath(Point& start_point, 
                                 std::vector<double>& x,
                                 std::vector<double>& dx,
-                                std::vector<double>& ddx){
+                                std::vector<double>& ddx,
+                                RefLineSimple ref_line, Trajectory& trajectory){
+        trajectory.clear();
         PiecewiseJerkTrajectory1d piecewise_jerk_traj(x.front(), dx.front(),
                                                 ddx.front());
         for (std::size_t i = 1; i < x.size(); ++i) {
@@ -311,16 +314,28 @@ class QpPlan{
         // 生成轨迹，并绘制
         POINT* pts = new POINT[80];
         int i = 0;
-        double accumulated_s = 0.0;
-        double accumulated_y = start_point.y;
-        while (accumulated_s < piecewise_jerk_traj.ParamLength()) {
+        double accumulated_s = 0;
+        while (accumulated_s <= piecewise_jerk_traj.ParamLength()) {
             double l = piecewise_jerk_traj.Evaluate(0, accumulated_s);
             double dl = piecewise_jerk_traj.Evaluate(1, accumulated_s);
-            accumulated_y += 100;
             double ddl = piecewise_jerk_traj.Evaluate(2, accumulated_s);
-            *(pts + i) = {static_cast<int>(l), static_cast<int>(accumulated_y)};
-            i += 1;
-            accumulated_s += 100;
+            float tmp_x = 0.0;
+            float tmp_y = 0.0;
+            if(ref_line.SL2XY(start_point.y + accumulated_s, l, tmp_x, tmp_y)){
+                *(pts + i) = {static_cast<int>(tmp_x), static_cast<int>(tmp_y)};
+                TrajectoryPoint tmp;
+                tmp.x = tmp_x;
+                tmp.y = tmp_y;
+                trajectory.points.emplace_back(std::move(tmp));
+                i += 1;
+                if(i == 80){
+                    break;
+                }
+                accumulated_s += 100;
+            }else{
+                // throw "sl2xy failed";
+                accumulated_s += 1;
+            } 
         }
         setlinestyle(PS_DASH, 20);
         setlinecolor(RED);

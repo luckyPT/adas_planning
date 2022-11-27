@@ -57,7 +57,7 @@ class DpPlan{
                             dp_cost[i-1][j][1] = k; 
                         }
                         // 绘制
-                        debug_draw(sample_points, i, j, ref_line_x, curve);
+                        // debug_draw(sample_points, i, j, ref_line_x, curve);
                     }
                 }
             }
@@ -96,7 +96,7 @@ class DpPlan{
 
         double calculate_path_cost(QuinticPolynomialCurve1d& curve, double start_s, double end_s){
             double path_cost = 0.0;
-            double l_cost = 10;
+            double l_cost = 1;
             double dl_cost = 1;
             double ddl_cost = 1;
             int interpolation_step = 50;

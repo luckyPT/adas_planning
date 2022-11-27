@@ -3,7 +3,7 @@
 #include "data/scene.hpp"
 #define graph_width  640
 #define graph_height 720
-#define hz 100
+#define hz 1
 int origin_x = 0;
 int origin_y = 0;
 bool closed_graph = false;

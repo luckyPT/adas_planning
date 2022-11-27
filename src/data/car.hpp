@@ -4,6 +4,7 @@
 #include "../em_planner/path_qp_plan.hpp"
 #include "point.hpp"
 #include "trajectory.hpp"
+#include "ref_line_simple.hpp"
 #include <time.h>
 #define CAR_MAX_SPEED 100
 class Car{
@@ -38,7 +39,7 @@ class Car{
     }
 
     void draw(){
-        trajectory.draw();
+        // trajectory.draw();
         setlinestyle(PS_SOLID, 1);
         fillrectangle(pos_x - 0.5 * width, pos_y + 0.5 * length, 
                         pos_x + 0.5 * width, pos_y - 0.5 * length);
@@ -75,6 +76,7 @@ class Car{
     }
 
     void draw_plan_trajectory(){
+        trajectory.clear();
         TrajectoryPoint ego_traj_start_point;
         ego_traj_start_point.x = pos_x;
         ego_traj_start_point.y = pos_y;
@@ -88,7 +90,25 @@ class Car{
         for(int i = 0; i < trajectory.points.size(); i++){
             points.emplace_back(Point(trajectory.points[i].x, trajectory.points[i].y));
         }
-        qp_planner.optimize(points, pos_x + 350);
-        trajectory.points.clear();
+        // XY2SL
+        RefLineSimple ref_line;
+        for(auto& point : input_data.ref_lane.points){
+            ref_line.add_point(point);
+        }
+
+        for(auto& point : points){
+            float s = 0.0;
+            float l = 0.0;
+            if(!ref_line.XY2SL(point.x, point.y, s, l)){
+                std::cout << "xy2sl failed" << std::endl;
+                throw "xy2sl failed";
+            }
+            point.x = l;
+            point.y = s;
+        }
+        if(qp_planner.optimize(points, ref_line, trajectory)){
+            this->pos_x = trajectory.points[4].x;
+            this->pos_y = trajectory.points[4].y;
+        }
     }
 };

@@ -12,8 +12,8 @@ int main(int argc, char const *argv[])
     // test_osqp();
     std::cout << "run example easy_x..." << std::endl;
     // test_easy_x();
-    // change_lane_visual();
-    RefLineSimple refLine;
-    refLine.test();
+    change_lane_visual();
+    // RefLineSimple refLine;
+    // refLine.test();
     return 0;
 }
